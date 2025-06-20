@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+
+        body {
+            background-color: rgba(63, 12, 12, 0.949);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+
+        h2 {
+            color: whitesmoke;
+            font-size: 2.25em;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        form {
+            background-color: #191f22;
+            padding: 20px;
+            border-radius: 8px;
+            width: 350px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            opacity: 76%;
+            display: flex;
+            flex-direction: column;
+
+        }
+
+        label {
+            color: white;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: none;
+            border-radius: 4px;
+            background-color: white;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            background-color: #FF5722;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .input-group span {
+            padding: 10px;
+            color: white;
+        }
+
+        .input-group input {
+            border: none;
+            outline: none;
+            flex: 1;
+        }
+
+
+        button {
+            width: 100%;
+            color: white;
+            cursor: pointer;
+        }
+
+        .error {
+            color: red;
+            font-size: 14px;
+        }
+
+        .is-invalid {
+            border-color: red;
+        }
+    </style>
+</head>
+
+<body class="container mt-5">
+    <h2>Registration Form</h2>
+    <form id="registrationForm">
+        <div class="mb-3">
+            <label for="firstName" class="form-label">First Name</label>
+            <input type="text" class="form-control" id="firstName">
+            <div class="error" id="firstNameError"></div>
+        </div>
+        <div class="mb-3">
+            <label for="lastName" class="form-label">Last Name</label>
+            <input type="text" class="form-control" id="lastName">
+            <div class="error" id="lastNameError"></div>
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email ID</label>
+            <input type="email" class="form-control" id="email">
+            <div class="error" id="emailError"></div>
+        </div>
+        <div class="mb-3">
+            <label for="phone" class="form-label">Phone Number</label>
+            <input type="text" class="form-control" id="phone">
+            <div class="error" id="phoneError"></div>
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password">
+            <div class="error" id="passwordError"></div>
+        </div>
+        <div class="mb-3">
+            <label for="confirmPassword" class="form-label">Confirm Password</label>
+            <input type="password" class="form-control" id="confirmPassword">
+            <div class="error" id="confirmPasswordError"></div>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+    <script>
+        const form = document.getElementById("registrationForm");
+
+        // Function to validate input fields 
+        function validateInput(input, errorElement, regex, errorMessage) {
+            const value = input.value.trim();
+            if (!regex.test(value)) {
+                errorElement.textContent = errorMessage; // Display error message
+                input.classList.add("is-invalid");
+                return false;
+            } else {
+                errorElement.textContent = "";
+                input.classList.remove("is-invalid");
+                return true;
+            }
+        }
+
+        // Add an event listener for input validation while typing
+        form.addEventListener("input", function (event) {
+            const target = event.target;
+
+            if (target.id === "firstName" || target.id === "lastName") {
+                validateInput(target, document.getElementById(target.id + "Error"), /^[A-Za-z]{2,}$/,
+                    "Only letters, at least 2 characters.");
+            }
+
+            // Validate email format
+            if (target.id === "email") {
+                validateInput(target, document.getElementById("emailError"),
+                    /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, "Enter a valid email.");
+            }
+
+            // Validate phone number 
+            if (target.id === "phone") {
+                validateInput(target, document.getElementById("phoneError"), /^(?!0)\d{10}$/,
+                    "Enter a valid 10-digit number not starting with 0.");
+            }
+
+            // Validate password 
+            if (target.id === "password") {
+                validateInput(target, document.getElementById("passwordError"),
+                    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+                    "Min 8 chars, 1 uppercase, 1 number, 1 special.");
+            }
+
+            if (target.id === "confirmPassword") {
+                const password = document.getElementById("password").value;
+                validateInput(target, document.getElementById("confirmPasswordError"), new RegExp(
+                        `^${password}$`),
+                    "Passwords do not match.");
+            }
+        });
+
+        // Form submission event
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            let isValid = true;
+
+            // Validate all input fields again before submitting
+            isValid &= validateInput(document.getElementById("firstName"), document.getElementById(
+                    "firstNameError"),
+                /^[A-Za-z]{2,}$/, "Only letters, at least 2 characters.");
+            isValid &= validateInput(document.getElementById("lastName"), document.getElementById(
+                    "lastNameError"),
+                /^[A-Za-z]{2,}$/, "Only letters, at least 2 characters.");
+            isValid &= validateInput(document.getElementById("email"), document.getElementById("emailError"),
+                /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, "Enter a valid email.");
+            isValid &= validateInput(document.getElementById("phone"), document.getElementById("phoneError"),
+                /^(?!0)\d{10}$/, "Enter a valid 10-digit number not starting with 0.");
+            isValid &= validateInput(document.getElementById("password"), document.getElementById(
+                    "passwordError"),
+                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+                "Min 8 chars, 1 uppercase, 1 number, 1 special.");
+            isValid &= validateInput(document.getElementById("confirmPassword"), document.getElementById(
+                    "confirmPasswordError"),
+                new RegExp(`^${document.getElementById("password").value}$`), "Passwords do not match.");
+
+            // show a success alert
+            if (isValid) {
+                alert("Form submitted successfully!");
+            }
+        });
+    </script>

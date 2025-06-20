@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Tic Tac Toe</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #000;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+
+        h1 {
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(255, 255, 0, 0.6);
+        }
+
+        #game {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            gap: 5px;
+            margin: 20px auto;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: rgb(249, 246, 246);
+            font-size: 2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px solid #ffff00;
+            box-shadow: 0 0 10px #ffff00;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            border-radius: 10px;
+            color: #ffff00;
+            font-weight: bold;
+        }
+
+        .cell.x {
+            color: #000000;
+            font-weight: bold;
+        }
+
+        .cell.o {
+            color: #000000;
+            font-weight: bold;
+        }
+
+        .cell:hover {
+            background-color: rgb(175, 175, 172);
+            transform: scale(1.05);
+        }
+
+        #message {
+            margin: 20px;
+            font-size: 1.5em;
+            color: #fff;
+            text-shadow: 1px 1px 3px rgba(255, 255, 0, 0.6);
+        }
+
+        #scoreboard {
+            margin: 10px;
+            font-size: 1.2em;
+            color: #fff;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #ffff00;
+            color: #000;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #cccc00;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Tic Tac Toe</h1>
+    <div id="scoreboard">X: 0 | O: 0</div>
+    <div id="game">
+        <div class="cell" data-cell></div>
+        <div class="cell" data-cell></div>
+        <div class="cell" data-cell></div>
+        <div class="cell" data-cell></div>
+        <div class="cell" data-cell></div>
+        <div class="cell" data-cell></div>
+        <div class="cell" data-cell></div>
+        <div class="cell" data-cell></div>
+        <div class="cell" data-cell></div>
+    </div>
+    <h2 id="message"></h2>
+    <button onclick="setMode('human')">Player VS Player</button>
+    <button onclick="setMode('ai')">Player VS Computer</button>
+    <button onclick="setMode('human')">Player VS Player</button>
+    <button onclick="setMode('ai', 'easy')">Player VS Computer - Easy</button>
+    <button onclick="setMode('ai', 'medium')">Player VS Computer - Medium</button>
+    <button onclick="setMode('ai', 'hard')">Player VS Computer - Hard</button>
+
+    <button onclick="startGame()">Restart</button>
+
+    <audio id="winSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+    <audio id="clickSound" src="https://www.soundjay.com/button/beep-01a.wav"></audio>
+
+    <script>
+  const cells = document.querySelectorAll('[data-cell]');
+  const board = document.getElementById('game');
+  const message = document.getElementById('message');
+  const scoreboard = document.getElementById('scoreboard');
+  const winSound = document.getElementById('winSound');
+  const clickSound = document.getElementById('clickSound');
+
+  let isXTurn = true;
+  let gameMode = 'human';
+  let aiLevel = 'easy'; // easy, medium, hard
+  let boardState = Array(9).fill(null);
+  let score = { X: 0, O: 0 };
+  const WIN_COMBINATIONS = [
+    [0,1,2], [3,4,5], [6,7,8],
+    [0,3,6], [1,4,7], [2,5,8],
+    [0,4,8], [2,4,6]
+  ];
+
+  cells.forEach(cell => {
+    cell.addEventListener('click', handleClick, { once: true });
+  });
+
+  function handleClick(e) {
+    const cell = e.target;
+    const index = [...cells].indexOf(cell);
+
+    if (boardState[index] || checkWinner(boardState)) return;
+
+    const currentClass = isXTurn ? 'x' : 'o';
+    boardState[index] = isXTurn ? 'X' : 'O';
+    cell.classList.add(currentClass);
+    cell.textContent = isXTurn ? 'X' : 'O';
+    clickSound.play();
+
+    if (checkWinner(boardState)) {
+      winSound.play();
+      endGame(isXTurn ? 'X' : 'O');
+    } else if (boardState.every(cell => cell)) {
+      endGame(null); // Draw
+    } else {
+      isXTurn = !isXTurn;
+      if (!isXTurn && gameMode === 'ai') {
+        setTimeout(computerMove, 400);
+      }
+    }
+  }
+
+  function computerMove() {
+    let bestMove;
+    if (aiLevel === 'easy') {
+      bestMove = getRandomMove();
+    } else if (aiLevel === 'medium') {
+      bestMove = Math.random() < 0.5 ? getRandomMove() : minimax(boardState, 'O').index;
+    } else {
+      bestMove = minimax(boardState, 'O').index;
+    }
+
+    if (bestMove !== undefined) {
+      const cell = cells[bestMove];
+      cell.click();
+    }
+  }
+
+  function getRandomMove() {
+    const emptyIndices = boardState.map((val, idx) => val ? null : idx).filter(idx => idx !== null);
+    return emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+  }
+
+  function checkWinner(board) {
+    return WIN_COMBINATIONS.some(combo => {
+      const [a,b,c] = combo;
+      return board[a] && board[a] === board[b] && board[a] === board[c];
+    });
+  }
+
+  function endGame(winner) {
+    if (winner) {
+      message.textContent = `${winner} Wins!`;
+      score[winner]++;
+    } else {
+      message.textContent = "It's a Draw!";
+    }
+    scoreboard.textContent = `X: ${score.X} | O: ${score.O}`;
+    cells.forEach(cell => cell.removeEventListener('click', handleClick));
+  }
+
+  function startGame() {
+    boardState = Array(9).fill(null);
+    isXTurn = true;
+    message.textContent = '';
+    cells.forEach(cell => {
+      cell.className = 'cell';
+      cell.textContent = '';
+      cell.addEventListener('click', handleClick, { once: true });
+    });
+  }
+
+  function setMode(mode, level = 'easy') {
+    gameMode = mode;
+    aiLevel = level;
+    startGame();
+  }
+
+  function minimax(newBoard, player) {
+    const huPlayer = 'X';
+    const aiPlayer = 'O';
+
+    const availSpots = newBoard.map((v, i) => v ? null : i).filter(i => i !== null);
+
+    if (checkWin(newBoard, huPlayer)) return { score: -10 };
+    if (checkWin(newBoard, aiPlayer)) return { score: 10 };
+    if (availSpots.length === 0) return { score: 0 };
+
+    const moves = [];
+
+    for (let i = 0; i < availSpots.length; i++) {
+      const move = {};
+      move.index = availSpots[i];
+      newBoard[availSpots[i]] = player;
+
+      const result = minimax(newBoard, player === aiPlayer ? huPlayer : aiPlayer);
+      move.score = result.score;
+
+      newBoard[availSpots[i]] = null;
+      moves.push(move);
+    }
+
+    let bestMove;
+    if (player === aiPlayer) {
+      let bestScore = -Infinity;
+      for (let i = 0; i < moves.length; i++) {
+        if (moves[i].score > bestScore) {
+          bestScore = moves[i].score;
+          bestMove = i;
+        }
+      }
+    } else {
+      let bestScore = Infinity;
+      for (let i = 0; i < moves.length; i++) {
+        if (moves[i].score < bestScore) {
+          bestScore = moves[i].score;
+          bestMove = i;
+        }
+      }
+    }
+
+    return moves[bestMove];
+  }
+
+  function checkWin(board, player) {
+    return WIN_COMBINATIONS.some(combo => {
+      return combo.every(index => board[index] === player);
+    });
+  }
+</script>
+</body>
+
+</html>
